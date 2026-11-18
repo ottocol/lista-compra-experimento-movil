@@ -1,15 +1,31 @@
 <script setup>
-    import { ref } from 'vue';
+    import { ref, watch } from 'vue';
+    import { buscarCatalogo } from '../servicios/api';
 
     const emit = defineEmits(["nuevo_prod"])
     const nombre = ref("")
+    const sugerencias = ref([])
 
-    function doAnyadir() {
-        const limpio = nombre.value.trim()
+    //Autocompletado: buscamos en el catálogo cada vez que cambia el texto
+    watch(nombre, async (texto) => {
+        if (!texto.trim()) {
+            sugerencias.value = []
+            return
+        }
+        sugerencias.value = await buscarCatalogo(texto.trim())
+    })
+
+    function anyadir(texto) {
+        const limpio = texto.trim()
         if (limpio) {
             emit("nuevo_prod", limpio)
             nombre.value = ""
+            sugerencias.value = []
         }
+    }
+
+    function doAnyadir() {
+        anyadir(nombre.value)
     }
 </script>
 
@@ -22,11 +38,19 @@
                 name="nombre"
                 type="text"
                 placeholder="Por ejemplo, café"
+                autocomplete="off"
                 required
                 v-model="nombre"
             >
             <button type="submit">Añadir</button>
         </div>
+        <ul class="sugerencias" v-if="sugerencias.length > 0">
+            <li v-for="s in sugerencias.slice(0, 8)" :key="s.id">
+                <button type="button" @click="anyadir(s.nombre)">
+                    {{ s.nombre }} <span>{{ s.marca }} · {{ s.formato }}</span>
+                </button>
+            </li>
+        </ul>
     </form>
 
 </template>
@@ -75,5 +99,38 @@ form label {
   background: #286245;
 }
 
+.sugerencias {
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid #dce5dc;
+  border-radius: 10px;
+  background: white;
+  overflow: hidden;
+}
+
+.sugerencias li + li {
+  border-top: 1px solid #e8eee8;
+}
+
+.sugerencias button {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sugerencias button:hover {
+  background: #f4f8f4;
+}
+
+.sugerencias span {
+  color: #66766a;
+  font-size: 0.9rem;
+}
 
 </style>

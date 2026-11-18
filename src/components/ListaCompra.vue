@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, onMounted } from 'vue';
+    import { ref, computed, onMounted } from 'vue';
     import { useRouter } from 'vue-router';
     import { logout, obtenerProductos, setComprado, crearProducto,
              borrarProducto, setNombre, getUsuario } from '../servicios/api';
@@ -9,6 +9,13 @@
     const router = useRouter()
     const email = ref("")
     let productos = ref([])
+
+    //Filtro de mi lista: los productos ya están en el cliente, no hace falta pedir nada
+    const filtro = ref("")
+    const productosFiltrados = computed(() => {
+      const f = filtro.value.trim().toLowerCase()
+      return productos.value.filter((p) => p.nombre.toLowerCase().includes(f))
+    })
 
     async function doLogout() {
         await logout()
@@ -69,11 +76,14 @@
     <p>Bienvenid@, <span id="usuario">{{ email }}</span> <button @click="doLogout">Logout</button></p>
     <NuevoProducto @nuevo_prod="doNuevo"/>
     <p class="ayuda">Pulsa un producto para marcarlo como comprado.</p>
-    <ul id="lista" v-if="productos.length>0">
-       <Producto v-for="prod in productos" :key="prod.id"
+    <input id="filtro" type="search" placeholder="Buscar en mi lista" v-model="filtro"
+           v-if="productos.length>0">
+    <ul id="lista" v-if="productosFiltrados.length>0">
+       <Producto v-for="prod in productosFiltrados" :key="prod.id"
         :nombre="prod.nombre" :comprado="prod.comprado" :id="prod.id"
         @toggle_prod="doToggle" @borrar_prod="doBorrar" @editar_prod="doEditar"/>
     </ul>
+    <p v-else-if="productos.length>0" class="ayuda">Ningún producto de la lista coincide.</p>
     <p v-else class="ayuda">La lista está vacía.</p>
 </template>
 
@@ -82,6 +92,17 @@
   margin: 0 0 0.75rem;
   color: #66766a;
   font-size: 0.95rem;
+}
+
+#filtro {
+  width: 100%;
+  margin: 0 0 0.75rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid #cbd8cc;
+  border-radius: 10px;
+  background: white;
+  color: inherit;
+  font: inherit;
 }
 
 #lista {

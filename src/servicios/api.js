@@ -88,6 +88,27 @@ async function setNombre(id, nombre) {
   if (error) throw new Error('Error al editar producto: ' + error.message)
 }
 
+//PLAN B para la demo: con ?red=mala en la URL cada búsqueda espera entre 0 y 2 s
+//antes de salir. Es una simulación: en una red real el desorden lo causa sobre todo
+//que unas respuestas son más pesadas o más lentas de calcular que otras
+async function simularRed() {
+  if (new URLSearchParams(location.search).has('red'))
+    await new Promise((resolve) => setTimeout(resolve, Math.random() * 2000))
+}
+
+//Busca productos del catálogo cuyo nombre contiene el texto
+async function buscarCatalogo(texto) {
+  await simularRed()
+  const { data, error } = await supabase
+    .from('catalogo')
+    .select('*')
+    .ilike('nombre', `%${texto}%`)
+    .order('nombre')
+
+  if (error) throw new Error('Error al buscar en el catálogo: ' + error.message)
+  return data
+}
+
 async function getUsuario() {
   //esto es más rápido que getUser aunque podría ser que no estuviéramos autenticados correctamente en el servidor
   let result = await supabase.auth.getSession()
@@ -98,4 +119,4 @@ async function getUsuario() {
 }
 
 export { login, logout, obtenerProductos, crearProducto, borrarProducto,
-         setComprado, setNombre, getUsuario }
+         setComprado, setNombre, getUsuario, buscarCatalogo }
