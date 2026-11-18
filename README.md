@@ -21,3 +21,12 @@ npm run dev
 4. Plan B si en tu red no se desordena: añade `?red=mala` a la URL (retardo aleatorio simulado de 0 a 2 s por búsqueda).
 
 El filtro «Buscar en mi lista» filtra en local, pero guarda el texto en una variable: si el navegador descarta la pestaña (`chrome://discards`), al volver se pierde.
+
+## La versión arreglada (rama `demo/busqueda-arreglada`)
+
+`git diff demo/busqueda-rota demo/busqueda-arreglada` enseña exactamente los cambios:
+
+- Autocompletado con *debounce* (300 ms), mínimo 2 letras y `AbortController`: cada tecla cancela la búsqueda anterior y solo se pinta la última.
+- La consulta pide solo las columnas que se muestran y como mucho 8 filas (antes, `select('*')` sin límite y `slice` en el cliente).
+- El filtro de la lista guarda el texto en la URL (`?q=leche`): sobrevive a la recarga y al descarte de la pestaña.
+- `onUnmounted` limpia el temporizador y la petición pendiente.

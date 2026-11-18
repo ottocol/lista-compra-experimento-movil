@@ -1,17 +1,23 @@
 <script setup>
     import { ref, computed, onMounted } from 'vue';
-    import { useRouter } from 'vue-router';
+    import { useRouter, useRoute } from 'vue-router';
     import { logout, obtenerProductos, setComprado, crearProducto,
              borrarProducto, setNombre, getUsuario } from '../servicios/api';
     import Producto from './Producto.vue'
     import NuevoProducto from './NuevoProducto.vue'
 
     const router = useRouter()
+    const route = useRoute()
     const email = ref("")
     let productos = ref([])
 
-    //Filtro de mi lista: los productos ya están en el cliente, no hace falta pedir nada
-    const filtro = ref("")
+    //Filtro de mi lista: los productos ya están en el cliente, no hace falta pedir nada.
+    //El texto vive en la URL (?q=leche), no en una variable: sobrevive a una recarga
+    //o a que el navegador descarte la pestaña, y no necesitamos guardarlo en ningún store
+    const filtro = computed({
+      get: () => route.query.q ?? "",
+      set: (valor) => router.replace({ query: { ...route.query, q: valor || undefined } })
+    })
     const productosFiltrados = computed(() => {
       const f = filtro.value.trim().toLowerCase()
       return productos.value.filter((p) => p.nombre.toLowerCase().includes(f))

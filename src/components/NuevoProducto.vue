@@ -1,26 +1,59 @@
 <script setup>
-    import { ref, watch } from 'vue';
+    import { ref, watch, onUnmounted } from 'vue';
     import { buscarCatalogo } from '../servicios/api';
 
     const emit = defineEmits(["nuevo_prod"])
     const nombre = ref("")
     const sugerencias = ref([])
 
-    //Autocompletado: buscamos en el catálogo cada vez que cambia el texto
-    watch(nombre, async (texto) => {
-        if (!texto.trim()) {
+    const ESPERA_MS = 300       //debounce: esperamos a que el usuario deje de teclear
+    const MIN_LETRAS = 2        //con una sola letra casi todo coincide: no merece la pena
+    let temporizador = null
+    let controlador = null      //AbortController de la búsqueda en curso
+
+    //Autocompletado con debounce y cancelación
+    watch(nombre, (texto) => {
+        clearTimeout(temporizador)
+        controlador?.abort()    //la búsqueda anterior ya no sirve: la cancelamos
+        texto = texto.trim()
+        if (texto.length < MIN_LETRAS) {
             sugerencias.value = []
             return
         }
-        sugerencias.value = await buscarCatalogo(texto.trim())
+        temporizador = setTimeout(async () => {
+            controlador = new AbortController()
+            const signal = controlador.signal
+            try {
+                const resultado = await buscarCatalogo(texto, signal)
+                //solo pintamos si esta búsqueda sigue siendo la última
+                if (!signal.aborted) sugerencias.value = resultado
+            }
+            catch (error) {
+                if (!signal.aborted) console.error(error)
+            }
+        }, ESPERA_MS)
     })
+
+    //al salir de la página no dejamos temporizadores ni peticiones vivas
+    onUnmounted(() => {
+        clearTimeout(temporizador)
+        controlador?.abort()
+    })
+
+    /* Variante con TanStack Query (sesión de server state): la clave incluye el texto,
+       así que la librería descarta las respuestas viejas y pasa un signal para cancelar:
+         useQuery({
+           queryKey: ['catalogo', textoConDebounce],
+           queryFn: ({ signal }) => buscarCatalogo(textoConDebounce.value, signal),
+           enabled: computed(() => textoConDebounce.value.length >= MIN_LETRAS),
+         })
+    */
 
     function anyadir(texto) {
         const limpio = texto.trim()
         if (limpio) {
             emit("nuevo_prod", limpio)
-            nombre.value = ""
-            sugerencias.value = []
+            nombre.value = ""   //el watch cancela lo pendiente y vacía las sugerencias
         }
     }
 
@@ -45,7 +78,7 @@
             <button type="submit">Añadir</button>
         </div>
         <ul class="sugerencias" v-if="sugerencias.length > 0">
-            <li v-for="s in sugerencias.slice(0, 8)" :key="s.id">
+            <li v-for="s in sugerencias" :key="s.id">
                 <button type="button" @click="anyadir(s.nombre)">
                     {{ s.nombre }} <span>{{ s.marca }} · {{ s.formato }}</span>
                 </button>

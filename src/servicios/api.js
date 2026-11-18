@@ -96,15 +96,23 @@ async function simularRed() {
     await new Promise((resolve) => setTimeout(resolve, Math.random() * 2000))
 }
 
-//Busca productos del catálogo cuyo nombre contiene el texto
-async function buscarCatalogo(texto) {
+//Busca productos del catálogo cuyo nombre contiene el texto.
+//Pedimos solo las columnas que se muestran y solo las que caben en pantalla,
+//y aceptamos una señal para poder cancelar la petición
+async function buscarCatalogo(texto, signal) {
   await simularRed()
+  if (signal?.aborted) return []
+
   const { data, error } = await supabase
     .from('catalogo')
-    .select('*')
+    .select('id, nombre, marca, formato')
     .ilike('nombre', `%${texto}%`)
     .order('nombre')
+    .limit(8)
+    .abortSignal(signal)
 
+  //una petición cancelada no es un error: simplemente ya no nos interesa
+  if (signal?.aborted) return []
   if (error) throw new Error('Error al buscar en el catálogo: ' + error.message)
   return data
 }
