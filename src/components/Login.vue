@@ -1,14 +1,17 @@
 <script setup>
     import { reactive } from 'vue';
+    import { useRouter, useRoute } from 'vue-router';
     import { login } from '../servicios/api';
 
     let usuario = reactive({email:"", password:""})
-    let emit = defineEmits(["login_ok"])
+    const router = useRouter()
+    const route = useRoute()
 
     async function doLogin() {
         try {
             await login(usuario.email, usuario.password)
-            emit("login_ok", usuario.email)
+            //volvemos a donde quería ir el usuario (lo pone el guard en la query) o a la lista
+            router.push(route.query.volver || '/')
         }
         catch (error){
             console.log(error)

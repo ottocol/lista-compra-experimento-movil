@@ -1,20 +1,24 @@
 <script setup>
     import { ref, onMounted } from 'vue';
+    import { useRouter } from 'vue-router';
     import { logout, obtenerProductos, setComprado, crearProducto,
-             borrarProducto, setNombre } from '../servicios/api';
+             borrarProducto, setNombre, getUsuario } from '../servicios/api';
     import Producto from './Producto.vue'
     import NuevoProducto from './NuevoProducto.vue'
-    const props = defineProps(["email"])
-    const emit = defineEmits(["logout_ok"])
 
+    const router = useRouter()
+    const email = ref("")
     let productos = ref([])
 
     async function doLogout() {
         await logout()
-        emit("logout_ok")
+        router.push({ name: 'login' })
     }
 
-    onMounted(function(){
+    onMounted(async function(){
+      //el guard ya ha comprobado que hay sesión antes de llegar aquí
+      const usuario = await getUsuario()
+      email.value = usuario?.email
       cargarProductos()
     })
 

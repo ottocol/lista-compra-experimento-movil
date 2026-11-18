@@ -7,6 +7,7 @@ npm install
 npm run dev
 ```
 
+- `src/router.js`: rutas (`/` lista, `/login`) y guard que manda al login si no hay sesión
 - `src/servicios/api.js`: todas las llamadas a Supabase
 - `src/components/ListaCompra.vue`: carga la lista y gestiona los eventos de los hijos
 - `src/components/Producto.vue`: un producto (pulsar = comprado/no comprado, ✎ = editar, x = borrar)
