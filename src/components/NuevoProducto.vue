@@ -22,14 +22,14 @@
         }
         temporizador = setTimeout(async () => {
             controlador = new AbortController()
-            const signal = controlador.signal
             try {
-                const resultado = await buscarCatalogo(texto, signal)
-                //solo pintamos si esta búsqueda sigue siendo la última
-                if (!signal.aborted) sugerencias.value = resultado
+                //si llega otra tecla, abort() hace que este await lance un AbortError:
+                //la respuesta de una búsqueda vieja nunca llega a pintarse
+                sugerencias.value = await buscarCatalogo(texto, controlador.signal)
             }
             catch (error) {
-                if (!signal.aborted) console.error(error)
+                //una búsqueda cancelada no es un error: simplemente ya no nos interesa
+                if (error.name !== 'AbortError') console.error(error)
             }
         }, ESPERA_MS)
     })

@@ -91,17 +91,24 @@ async function setNombre(id, nombre) {
 //PLAN B para la demo: con ?red=mala en la URL cada búsqueda espera entre 0 y 2 s
 //antes de salir. Es una simulación: en una red real el desorden lo causa sobre todo
 //que unas respuestas son más pesadas o más lentas de calcular que otras
-async function simularRed() {
-  if (new URLSearchParams(location.search).has('red'))
-    await new Promise((resolve) => setTimeout(resolve, Math.random() * 2000))
+//(el retardo también se puede cancelar con la misma señal que la petición)
+async function simularRed(signal) {
+  if (!new URLSearchParams(location.search).has('red')) return
+  await new Promise((resolve, reject) => {
+    const t = setTimeout(resolve, Math.random() * 2000)
+    signal?.addEventListener('abort', () => {
+      clearTimeout(t)
+      reject(signal.reason)
+    }, { once: true })
+  })
 }
 
 //Busca productos del catálogo cuyo nombre contiene el texto.
 //Pedimos solo las columnas que se muestran y solo las que caben en pantalla,
-//y aceptamos una señal para poder cancelar la petición
+//y aceptamos una señal para poder cancelar la petición.
+//Si se cancela, lanza un AbortError, igual que haría fetch
 async function buscarCatalogo(texto, signal) {
-  await simularRed()
-  if (signal?.aborted) return []
+  await simularRed(signal)
 
   const { data, error } = await supabase
     .from('catalogo')
@@ -111,8 +118,10 @@ async function buscarCatalogo(texto, signal) {
     .limit(8)
     .abortSignal(signal)
 
-  //una petición cancelada no es un error: simplemente ya no nos interesa
-  if (signal?.aborted) return []
+  //supabase-js cancela la petición de verdad, pero no lanza la excepción:
+  //devuelve { error }. Si fue una cancelación, lanzamos el mismo AbortError
+  //que lanzaría fetch, para que quien nos llama lo trate igual
+  signal?.throwIfAborted()
   if (error) throw new Error('Error al buscar en el catálogo: ' + error.message)
   return data
 }
