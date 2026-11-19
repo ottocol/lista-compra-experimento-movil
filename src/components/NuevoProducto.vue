@@ -1,8 +1,24 @@
 <script setup>
-    import { ref } from 'vue';
+    import { ref, nextTick } from 'vue';
+    import Escaner from './Escaner.vue'
 
     const emit = defineEmits(["nuevo_prod"])
     const nombre = ref("")
+    const escaneando = ref(false)
+    const campo = ref(null)
+
+    //El nombre encontrado rellena el campo, pero no se añade solo:
+    //el usuario puede revisarlo o corregirlo antes de pulsar «Añadir»
+    async function alEscanear(texto) {
+        nombre.value = texto
+        await cerrarEscaner()
+    }
+
+    async function cerrarEscaner() {
+        escaneando.value = false
+        await nextTick()
+        campo.value?.focus()
+    }
 
     function doAnyadir() {
         const limpio = nombre.value.trim()
@@ -18,6 +34,7 @@
         <label for="nuevo_producto">Nuevo producto</label>
         <div class="campos">
             <input
+                ref="campo"
                 id="nuevo_producto"
                 name="nombre"
                 type="text"
@@ -26,7 +43,11 @@
                 v-model="nombre"
             >
             <button type="submit">Añadir</button>
+            <button type="button" class="escanear" v-if="!escaneando" @click="escaneando = true">
+                Escanear
+            </button>
         </div>
+        <Escaner v-if="escaneando" @producto="alEscanear" @cerrar="cerrarEscaner"/>
     </form>
 
 </template>
@@ -73,6 +94,15 @@ form label {
 
 .campos button:hover {
   background: #286245;
+}
+
+.campos button.escanear {
+  background: #e8eee8;
+  color: inherit;
+}
+
+.campos button.escanear:hover {
+  background: #dbe5db;
 }
 
 
