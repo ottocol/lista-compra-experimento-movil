@@ -40,6 +40,20 @@ async function obtenerProductos() {
   return data
 }
 
+//Productos de la lista cuyo nombre contiene el texto
+async function buscarEnLista(texto) {
+  if (!await getSesion()) return []
+
+  const { data, error } = await supabase
+    .from('lista')
+    .select('id, nombre, comprado, usuario')
+    .ilike('nombre', `%${texto}%`)
+    .order('id')
+
+  if (error) throw new Error('Error al buscar en la lista: ' + error.message)
+  return data
+}
+
 //Crea un producto y devuelve el objeto creado (con su id asignado por la BD)
 async function crearProducto(nombre) {
   const session = await getSesion()
@@ -119,4 +133,4 @@ async function getUsuario() {
 }
 
 export { login, logout, obtenerProductos, crearProducto, borrarProducto,
-         setComprado, setNombre, getUsuario, buscarCatalogo }
+         setComprado, setNombre, getUsuario, buscarCatalogo, buscarEnLista }

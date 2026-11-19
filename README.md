@@ -20,4 +20,4 @@ npm run dev
 3. La petición de «l» trae hasta 1000 filas (todas las columnas) y llega la última: las sugerencias no corresponden a lo escrito. Míralo en la columna *Size* y en el orden de llegada.
 4. Plan B si en tu red no se desordena: añade `?red=mala` a la URL (retardo aleatorio simulado de 0 a 2 s por búsqueda).
 
-El filtro «Buscar en mi lista» filtra en local, pero guarda el texto en una variable: si el navegador descarta la pestaña (`chrome://discards`), al volver se pierde.
+El filtro «Buscar en mi lista» pide a Supabase los productos que coinciden con cada tecla, aunque la lista ya está entera en el cliente (míralo en el panel Network). Además guarda el texto en una variable: si el navegador descarta la pestaña (`chrome://discards`), al volver se pierde.

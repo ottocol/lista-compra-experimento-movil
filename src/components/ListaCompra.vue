@@ -1,8 +1,8 @@
 <script setup>
-    import { ref, computed, onMounted } from 'vue';
+    import { ref, watch, onMounted } from 'vue';
     import { useRouter } from 'vue-router';
     import { logout, obtenerProductos, setComprado, crearProducto,
-             borrarProducto, setNombre, getUsuario } from '../servicios/api';
+             borrarProducto, setNombre, getUsuario, buscarEnLista } from '../servicios/api';
     import Producto from './Producto.vue'
     import NuevoProducto from './NuevoProducto.vue'
 
@@ -10,11 +10,10 @@
     const email = ref("")
     let productos = ref([])
 
-    //Filtro de mi lista: los productos ya están en el cliente, no hace falta pedir nada
+    //Filtro de mi lista: pedimos al servidor los productos que coinciden
     const filtro = ref("")
-    const productosFiltrados = computed(() => {
-      const f = filtro.value.trim().toLowerCase()
-      return productos.value.filter((p) => p.nombre.toLowerCase().includes(f))
+    watch(filtro, async (texto) => {
+      productos.value = await buscarEnLista(texto.trim())
     })
 
     async function doLogout() {
@@ -77,13 +76,13 @@
     <NuevoProducto @nuevo_prod="doNuevo"/>
     <p class="ayuda">Pulsa un producto para marcarlo como comprado.</p>
     <input id="filtro" type="search" placeholder="Buscar en mi lista" v-model="filtro"
-           v-if="productos.length>0">
-    <ul id="lista" v-if="productosFiltrados.length>0">
-       <Producto v-for="prod in productosFiltrados" :key="prod.id"
+           v-if="productos.length>0 || filtro">
+    <ul id="lista" v-if="productos.length>0">
+       <Producto v-for="prod in productos" :key="prod.id"
         :nombre="prod.nombre" :comprado="prod.comprado" :id="prod.id"
         @toggle_prod="doToggle" @borrar_prod="doBorrar" @editar_prod="doEditar"/>
     </ul>
-    <p v-else-if="productos.length>0" class="ayuda">Ningún producto de la lista coincide.</p>
+    <p v-else-if="filtro" class="ayuda">Ningún producto de la lista coincide.</p>
     <p v-else class="ayuda">La lista está vacía.</p>
 </template>
 
