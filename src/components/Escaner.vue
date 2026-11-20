@@ -32,7 +32,12 @@
             return sinCamara("Este navegador no da acceso a la cámara.")
         try {
             stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "environment" },   //la cámara trasera si la hay
+                video: { 
+                    facingMode: "environment", //la cámara trasera si la hay
+                    width:  { ideal: 1280 },   //para leer un código no hace falta 4K
+                    height: { ideal: 720 },
+                    frameRate: { ideal: 15 }   //si solo analizamos 4 fotogramas por segundo, 30 o 60 son demasiados
+                },   
                 audio: false
             })
         }
