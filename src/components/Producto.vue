@@ -35,7 +35,16 @@
 
 <template>
     <li v-if="!editando">
-        <img v-if="foto" class="foto" :src="`/fotos/originales/${foto}.jpg`">
+        <!-- srcset: el navegador elige según la densidad de la pantalla (64 px CSS
+             son 128 px físicos en una pantalla 2x y 192 en una 3x).
+             width/height: reserva el hueco antes de que llegue la imagen.
+             loading="lazy": las de fuera de la pantalla, solo al acercarse con el scroll -->
+        <img v-if="foto" class="foto"
+             :src="`/fotos/64/${foto}.jpg`"
+             :srcset="`/fotos/64/${foto}.jpg 1x, /fotos/128/${foto}.jpg 2x, /fotos/192/${foto}.jpg 3x`"
+             width="64" height="64"
+             loading="lazy" decoding="async"
+             :alt="nombre">
         <button :class="calcClass()" @click="$emit('toggle_prod', id)">
             {{nombre}}
         </button>
@@ -58,7 +67,10 @@
 
 <style scoped>
 .foto {
+  flex: none;
   width: 64px;
+  height: 64px;
+  object-fit: cover;
   border-radius: 8px;
 }
 
