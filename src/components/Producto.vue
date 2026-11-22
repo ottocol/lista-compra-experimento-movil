@@ -1,8 +1,12 @@
 <script setup>
- import { ref } from 'vue';
+ import { ref, computed } from 'vue';
+ import { fotoDe } from '../servicios/fotos';
 
  const props = defineProps(["nombre","comprado","id"])
  const emit = defineEmits(["toggle_prod", "borrar_prod", "editar_prod"])
+
+ //foto del producto, si la app tiene una para él
+ const foto = computed(() => fotoDe(props.nombre))
 
  //estado local del componente: ¿estamos editando el nombre?
  const editando = ref(false)
@@ -31,6 +35,7 @@
 
 <template>
     <li v-if="!editando">
+        <img v-if="foto" class="foto" :src="`/fotos/originales/${foto}.jpg`">
         <button :class="calcClass()" @click="$emit('toggle_prod', id)">
             {{nombre}}
         </button>
@@ -52,6 +57,11 @@
 </template>
 
 <style scoped>
+.foto {
+  width: 64px;
+  border-radius: 8px;
+}
+
 li {
   display: flex;
   align-items: center;
