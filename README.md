@@ -20,6 +20,7 @@ La app trae fotos para 18 productos habituales (`public/fotos`); se buscan por e
 1. Añade esos productos a tu lista con `supabase/productos_con_foto.sql` (cambia el email por el tuyo).
 2. `npm run build && npm run preview`, DevTools en modo dispositivo, red 3G y el filtro **Img** del panel Network.
 3. **Rota:** cada fila carga la foto original (2400 × 1800 px, unos 1,4 MB) para enseñarla a 64 px. Se descargan las 18 al cargar la página, se vean o no: unos 26 MB. Sin `width`/`height`, la lista además «salta» al llegar cada foto.
-4. **Arreglada** (`git diff demo/fotos-rota demo/fotos-arreglada`): miniaturas de 64, 128 y 192 px con `srcset` (`1x`, `2x`, `3x`), `width` y `height`, `loading="lazy"` y `alt`.
+4. **Arreglada** (`git diff demo/fotos-rota demo/fotos-arreglada`): miniaturas de 64, 128 y 192 px con `srcset` (`1x`, `2x`, `3x`), `width` y `height`, `loading="lazy"` y `alt`. Medido con un móvil simulado de densidad 3: de 26 MB a 74 KB.
+5. **Ojo con `loading="lazy"`:** Chrome no espera a que la imagen esté en pantalla, sino que descarga por adelantado las que están relativamente cerca. Con los 18 productos se cargan todas y el ahorro viene solo de `srcset`. Para ver el efecto del *lazy* hace falta una lista larga: con 120 productos, al cargar se descargaron 20 imágenes y el resto al hacer scroll. El SQL tiene comentada una variante con 90 productos.
 
 Las fotos de ejemplo son sintéticas, pero pesan como fotos de verdad. Para usar fotos tuyas (por ejemplo, hechas con el móvil), sustituye los ficheros de `public/fotos/originales` manteniendo el nombre y ejecuta `python scripts/miniaturas.py` (necesita Pillow).
