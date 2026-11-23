@@ -19,6 +19,10 @@ async function login(email, password) {
 async function logout() {
   const { error } = await supabase.auth.signOut({ scope: 'local' })
   if (error) throw new Error('Error al cerrar sesión: ' + error.message)
+  //La caché de datos guarda la lista de este usuario: la clave es la URL y la
+  //URL es la misma para todos (el filtro por usuario lo hace la RLS en el servidor).
+  //Si no la borramos, quien entre después en este dispositivo vería esta lista sin red.
+  if ('caches' in window) await caches.delete('datos')
 }
 
 //Devuelve la sesión actual o null si no hay usuario autenticado

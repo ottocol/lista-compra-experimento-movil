@@ -30,3 +30,24 @@ El nombre encontrado rellena el campo, pero no se añade solo: el usuario lo rev
 - En el simulador de iOS no hay cámara: sirve para ver la alternativa de la foto y el polyfill.
 
 Código: `src/components/Escaner.vue`, `src/servicios/lectorCodigos.js`, `src/servicios/productosOFF.js`.
+
+## Demo de PWA (rama `demo/pwa`)
+
+Parte de `demo/escaner` y la convierte en PWA con [vite-plugin-pwa](https://vite-pwa-org.netlify.app/). Todo lo importante está en `vite.config.js`: la tabla de estrategias de la clase escrita como configuración.
+
+| Recurso | Estrategia | Sin red |
+| --- | --- | --- |
+| HTML, JS, CSS, iconos | Precache generado en el build (con hash de cada fichero); cualquier navegación → `index.html` | La app abre |
+| Lecturas de la tabla (GET `/rest/...` de Supabase) | Red primero, 3 s de tiempo límite, solo respuestas 200 | La última lista vista |
+| Polyfill del escáner (`ponyfill-*.js`, `zxing_reader-*.wasm`) | Fuera del precache; caché primero la primera vez que se usa | Funciona si ya se usó una vez con red |
+| Open Food Facts | Sin pasar por el service worker: la app ya guarda los productos encontrados en `localStorage` | Los códigos ya consultados; los nuevos, a mano |
+| Login (`/auth/...`) y escrituras | Sin caché | Error (las escrituras fallan) |
+
+Además: `AvisoVersion.vue` avisa cuando hay una versión nueva en espera, `App.vue` muestra «Sin conexión» y `logout()` borra la caché de datos (la clave de la caché es la URL, que es la misma para todos los usuarios).
+
+El service worker solo se genera en el build: **`npm run build && npm run preview`**, no `npm run dev`.
+
+1. **¿Es instalable?** DevTools → Application → Manifest. Chrome de escritorio muestra el icono de instalar en la barra de direcciones.
+2. **¿Por qué no me llega la versión nueva?** Con la app abierta, cambia un texto (por ejemplo el `<h1>` de `App.vue`), `npm run build` (el `preview` puede seguir en marcha) y recarga: el texto no cambia, en Application → Service workers aparece el nuevo *waiting to activate* y la app muestra el aviso. «Recargar» del aviso lo activa.
+3. **Sin conexión.** Application → Service workers → *Offline* (o Network → *Offline*; comprueba en el ensayo que las peticiones del service worker también se cortan). La app abre y la lista sale de la caché. Marcar un producto falla: la caché solo guarda lecturas.
+4. **Al acabar:** Application → Storage → *Clear site data*. Si no, el service worker registrado en `localhost:4173` seguirá respondiendo a cualquier otro proyecto que sirvas en ese puerto.
